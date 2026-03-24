@@ -87,6 +87,56 @@ class UserDb(Db):
     """
         self.execute(cmd)
     
+    def create_friend_table(self):
+        cmd = """
+    CREATE TABLE IF NOT EXISTS friendship (
+        user1 INTEGER NOT NULL,
+        user2 INTEGER NOT NULL,
+        relationship TEXT CHECK(relationship IN ('pending', 'friend', 'blocked')) DEFAULT 'pending',
+        adder INTEGER NOT NULL,
+        blocked_by_user1 BOOLEAN,
+        blocked_by_user2 BOOLEAN
+    )
+    """
+        """
+        adder 是添加者的 uid
+        如果 pending 后另一方拒绝成为好友，默认删除关系
+        被拉黑的不再有请求成为好友的权限
+        """
+        self.execute(cmd)
+    
+    def query_relationship(self, uida, uidb):
+        if uida > uidb:
+            uida, uidb = uidb, uida
+            
+        return self.query("SELECT * from friendship WHERE user1 = ? and user2 = ?", (uida, uidb))
+    
+    def change_relationship(self, uida, uidb, newrelationship):
+        if newrelationship not in ['pending', 'blocked', 'friend']:
+            return False
+
+        if uida > uidb:
+            uida, uidb = uidb, uida
+            
+        self.execute("UPDATE friendship SET relationship = ? WHERE user1 = ? and user2 = ?", (newrelationship, uida, uidb))
+        return True
+    
+    def pending_friend(self, uida, uidb, adder):
+        if adder != uida and adder != uidb:
+            return False
+
+        if uida == uidb:
+            return False
+            
+        if self.query_relationship(uida, uidb):
+            return False
+
+        if uida > uidb:
+            uida, uidb = uidb, uida
+
+        self.execute("INSERT INTO friendship (user1, user2, adder, blocked_by_user1, blocked_by_user2) VALUES (?, ?, ?, ?, ?)", (uida, uidb, adder, False, False))
+        return True
+    
     def change_pwd(self, uid : int, new_pwd : str):
         pwd_hash = self.hasher.hash(new_pwd)
         self.execute("UPDATE users SET pwd_hash = ? where uid = ?", (pwd_hash, uid))
@@ -102,12 +152,3 @@ class UserDb(Db):
 
     def change_introduction(self, oped : int, new_intro : str):
         self.execute('UPDATE users SET introduction = ? where uid = ?', (new_intro, oped))
-    
-    def create_dialogue_table(self, ua_id : int, ub_id : int) :
-        cmd = """
-    CREATE TABLE IF NOT EXISTS U{}U{} (
-        time_stamp REAL,
-        content TEXT
-    )
-    """.format(ua_id, ub_id)
-        self.execute(cmd)

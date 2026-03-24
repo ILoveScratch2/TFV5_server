@@ -1,5 +1,6 @@
 import json
 from argon2 import PasswordHasher
+from channel import InstantConnect
 from captcha.image import ImageCaptcha
 import threading
 import web
@@ -138,6 +139,7 @@ def create_new_server():
     avatar.init(PORT_API)
     USER_CURSOR = db.UserDb(HASHER, "res/{}/db/user.db".format(PORT_API), PORT_API, PORT_TCP)
     USER_CURSOR.create_user_table()
+    USER_CURSOR.create_friend_table()
     print("[INFO] user.db 创建完毕！")
     FORUM_CURSOR = db.ForumDb('res/{}/db/forum.db'.format(PORT_API), PORT_API, PORT_TCP)
     FORUM_CURSOR.create_forum_table()
@@ -217,7 +219,8 @@ def main():
     FILE_CURSOR = db.FileDb("res/{}/file/file.db".format(PORT_API), PORT_API)
     NOTIFICATION_CURSOR = db.NotificationsDb("res/{}/db/notification.db".format(PORT_API), PORT_API)
     GROUP_CURSOR = db.GroupDb("res/{}/db/group.db".format(PORT_API), PORT_API)
-    FLASK_APP = web.main(PORT_API, PORT_TCP, pub_pem, PRI_KEY, IMGCAPTCHA, USER_CURSOR, FORUM_CURSOR, FILE_CURSOR, NOTIFICATION_CURSOR, GROUP_CURSOR)
+    INSTANT_CONTACT = InstantConnect(PORT_API, PORT_TCP, NOTIFICATION_CURSOR, USER_CURSOR)
+    FLASK_APP = web.main(PORT_API, PORT_TCP, pub_pem, PRI_KEY, IMGCAPTCHA, USER_CURSOR, FORUM_CURSOR, FILE_CURSOR, NOTIFICATION_CURSOR, GROUP_CURSOR, INSTANT_CONTACT)
     prt("注意：生产环境内不要显式启动 api 服务器！", "yellow")
     stat = input("是否直接显式启动 api 服务器？[Y]")
     if stat == 'Y' or stat == 'y':

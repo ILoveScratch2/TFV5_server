@@ -12,7 +12,7 @@ import time
 def bool_res() -> tuple: 
     return (str(time.time()) + "False", str(time.time()) + "True")
 
-def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, forum_cursor, file_cursor, notification_cursor, group_cursor):
+def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, forum_cursor, file_cursor, notification_cursor, group_cursor, instant_contact):
     """
     pri 是 cryptography 库的私钥对象
     pub_pem 是二进制 pem 文件路径
@@ -396,7 +396,7 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
         password = req["password"]
         fid = req["fid"]
         pid = req["pid"]
-        comment = req["comment"]
+        comment : str = req["comment"]
         user_stat = user_cursor.uid_query(uid)[0][4]
         if user_stat == 'banned':
             return bool_res()[False]
@@ -410,6 +410,16 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
         comments[str(fid)][str(pid)][str(time.time())] = [uid, comment]
         with open("res/{}/forum/comments.json".format(port_api), "w+") as file:
             json.dump(comments, file)
+        comment_space_split : str = comment.split(' ')
+        comment_at_split = comment_space_split.split('@')
+        for block in comment_at_split:
+            if '@' != block[0]:
+                continue
+            at_user = block[1:]
+            if not user_cursor.username_query(at_user):
+                continue 
+            # instant_contact.
+
         return bool_res()[True]
 
     @app.route("/forum/get_all_comments/<fid>/<pid>")
@@ -637,17 +647,18 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
             return bool_res()[False]
         return bool_res()[group_cursor.add_admin(gid, added)]
     
-    @api("/group/invite_member", methods=['POST'])
-    def invite_member(req):
-        uid = req['uid']
-        password = req['password']
-        if not user_cursor.verify_user(uid, password):
-            return bool_res()[False]
-        gid = req['gid']
-        added = req['added']
-        if not user_cursor.uid_query(added):
-            return bool_res()[False]
-        return bool_res()[group_cursor.add_member(gid, added)]
+    # @api("/group/invite_member", methods=['POST'])
+    # def invite_member(req):
+    #     uid = req['uid']
+    #     password = req['password']
+    #     if not user_cursor.verify_user(uid, password):
+    #         return bool_res()[False]
+    # TODO 这里应该有好友检查
+    #     gid = req['gid']
+    #     added = req['added']
+    #     if not user_cursor.uid_query(added):
+    #         return bool_res()[False]
+    #     return bool_res()[group_cursor.add_member(gid, added)]
 
     @api("/group/remove_member", methods=['POST'])
     def remove_member(req):
@@ -695,6 +706,32 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
             return bool_res()[False]
         group_cursor.delete_group(gid)
         return bool_res()[True]
+    
+    @api("/friend/add_friend", methods=['POST'])
+    def add_friend(req):
+        """
+        TODO 
+        """
+        uid = req["uid"]
+        password = req["password"]
+        added = req["added"]
+        req_word = req["req_word"]
+        if not user_cursor.verify_user(uid, password):
+            return bool_res()[False]
+    
+    @api("/friend/deal_ship", methods=['POST'])
+    def deal_ship(req):
+        """
+        TODO 
+        """
+        uid = req["uid"]
+        password = req["password"]
+        dealt = req["dealt"]
+        stat = req["stat"]
+        if not user_cursor.verify_user(uid, password):
+            return bool_res()[False]
+        if not stat in ["allow", "reject"]:
+            return bool_res()[False]
     
     return app
 
