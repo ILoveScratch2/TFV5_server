@@ -89,7 +89,7 @@ def create_new_server():
     with open("res/{}/secret/pri.pem".format(PORT_API), "wb") as file:
         file.write(pri_pem)
     
-    with open("server_config.json", "a+") as file:
+    with open("server_config.json", "r+") as file:
         try:
             config = json.load(file)
             config[str(len(config))] = [PORT_API, PORT_TCP]
