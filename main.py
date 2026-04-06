@@ -83,6 +83,10 @@ def create_new_server():
 
     if not os.path.exists("res/{}/captcha".format(PORT_API)):
         os.makedirs("res/{}/captcha".format(PORT_API))
+    
+    if not os.path.isfile(os.path.join(os.getcwd(), "server_config.json")):
+        with open("server_config.json", "w+") as file:
+            file.write('')
 
     with open("res/{}/secret/pub.pem".format(PORT_API), "wb") as file:
         file.write(pub_pem)
@@ -160,7 +164,7 @@ def create_new_server():
     NOTIFICATION_CURSOR.create_user_table(0)
     
 def flask_thread():
-    FLASK_APP.run(host='0.0.0.0', port = PORT_API, debug=False, use_reloader=False)
+    FLASK_APP.run(host='0.0.0.0', port = PORT_API, debug=False)
 
 def main():
     global IMGCAPTCHA

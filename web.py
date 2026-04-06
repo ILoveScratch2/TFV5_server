@@ -157,8 +157,10 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
             if not register_tool.email_code(sender_email, port_api, email, email_pwd):
                 return bool_res()[False]
 
-        user_cursor.user_create(username, password, time.time(), email)
-        if is_email_activate:
+        succeeded = user_cursor.user_create(username, password, time.time(), email)
+        if not succeeded:
+            return bool_res()[False]
+        if is_email_activate and succeeded:
             user_cursor.change_auth(user_cursor.username_query(username)[0][0], "banned")
         notification_cursor.create_user_table(user_cursor.username_query(username)[0][0])
         return bool_res()[True]
