@@ -677,7 +677,7 @@ def main(port_api : int, port_tcp : int, pub_pem, pri, ImgCaptcha, user_cursor, 
         oped = group_cursor.is_admin(gid, removed)
         if not oper > oped:
             return bool_res()[False]
-        return bool_res()[group_cursor.remove_member(uid, removed)]
+        return bool_res()[group_cursor.remove_member(gid, removed)]
     
     @api("/group/remove_admin", methods=['POST'])
     def remove_admin(req):
